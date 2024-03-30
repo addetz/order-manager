@@ -107,7 +107,9 @@ func populateJobsCallback(document dom.Document, jobs []*jobs.Job) {
 	document.GetElementByID("jobsTable").ReplaceChild(newBody, oldBody)
 }
 
-func populateJob(document dom.Document, tableSection *dom.HTMLTableSectionElement, job *jobs.Job) {
+func populateJob(document dom.Document,
+	tableSection *dom.HTMLTableSectionElement,
+	job *jobs.Job) {
 	row := tableSection.InsertRow(0)
 	row.InsertCell(0).SetTextContent(job.ID)
 	row.InsertCell(1).SetTextContent(job.OrderDate.Format(jobs.JobsDateFormat))
@@ -123,7 +125,8 @@ func populateJob(document dom.Document, tableSection *dom.HTMLTableSectionElemen
 	statusCell.AppendChild(statusSelectElement)
 	statusSelectElement.AddEventListener("change", true, func(e dom.Event) {
 		jobId := strings.Split(statusSelectElement.ID(), "-")[1]
-		job := jobs.NewJob("", "", job.Status, "", "")
+		newStatus := statusSelectElement.SelectedOptions()[0].Value
+		job := jobs.NewJob("", "", newStatus, "", "")
 		updateJob(jobId, job)
 	})
 
@@ -137,7 +140,8 @@ func populateJob(document dom.Document, tableSection *dom.HTMLTableSectionElemen
 	customerCell.AppendChild(customerSelectElement)
 	customerSelectElement.AddEventListener("change", true, func(e dom.Event) {
 		jobId := strings.Split(customerSelectElement.ID(), "-")[1]
-		job := jobs.NewJob("", "", "", job.Customer, "")
+		newCustomer := customerSelectElement.SelectedOptions()[0].Value
+		job := jobs.NewJob("", "", "", newCustomer, "")
 		updateJob(jobId, job)
 	})
 
