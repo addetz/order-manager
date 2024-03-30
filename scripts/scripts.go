@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	_ "embed"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -31,21 +32,54 @@ func main() {
 	})
 
 	statusDropdown := document.GetElementByID("statusDropdown").(*dom.HTMLSelectElement)
-	populateStatusDropdownOptions(document, statusDropdown)
-
+	populateStatusDropdownOptions(document, statusDropdown, "")
 	customerDropdown := document.GetElementByID("customerDropdown").(*dom.HTMLSelectElement)
-	for _, c := range jobs.CustomerList {
-		o := document.CreateElement("option")
-		o.SetTextContent(c)
-		customerDropdown.AppendChild(o)
-	}
+	populateCustomerDropdownOptions(document, customerDropdown, "")
 }
 
-func populateStatusDropdownOptions(document dom.Document, statusDropdown *dom.HTMLSelectElement) {
-	for _, c := range jobs.JobStatusList {
+func populateStatusDropdownOptions(document dom.Document,
+	statusDropdown *dom.HTMLSelectElement,
+	currentValue string) {
+	for i, c := range jobs.JobStatusList {
 		o := document.CreateElement("option")
 		o.SetTextContent(c)
 		statusDropdown.AppendChild(o)
+		if c == currentValue {
+			statusDropdown.SelectedIndex = i
+		}
+	}
+}
+
+func populateCustomerDropdownOptions(document dom.Document,
+	customerDropdown *dom.HTMLSelectElement,
+	currentValue string) {
+	go func(callback func(document dom.Document,
+		customerDropdown *dom.HTMLSelectElement,
+		customers []*jobs.Customer,
+		currentValue string)) {
+		resp, err := http.Get("/customers")
+		if err != nil {
+			log.Fatal(err)
+		}
+		customers, err := jobs.NewCustomersResponse(resp)
+		if err != nil {
+			log.Fatal(err)
+		}
+		callback(document, customerDropdown, customers, currentValue)
+	}(populateCustomerDropdownOptionsCallback)
+}
+
+func populateCustomerDropdownOptionsCallback(document dom.Document,
+	customerDropdown *dom.HTMLSelectElement,
+	customers []*jobs.Customer,
+	currentValue string) {
+	for i, c := range customers {
+		o := document.CreateElement("option")
+		o.SetTextContent(c.Name)
+		customerDropdown.AppendChild(o)
+		if c.Name == currentValue {
+			customerDropdown.SelectedIndex = i
+		}
 	}
 }
 
@@ -55,7 +89,7 @@ func populateAllJobs(document dom.Document) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		jobs, err := jobs.NewBackendResponse(resp)
+		jobs, err := jobs.NewJobsResponse(resp)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -78,22 +112,53 @@ func populateJob(document dom.Document, tableSection *dom.HTMLTableSectionElemen
 	row.InsertCell(0).SetTextContent(job.ID)
 	row.InsertCell(1).SetTextContent(job.OrderDate.Format(jobs.JobsDateFormat))
 	row.InsertCell(2).SetTextContent(job.DeadlineDate.Format(jobs.JobsDateFormat))
+
+	// Status
 	statusCell := row.InsertCell(3)
 	statusCell.SetContentEditable("true")
-	selEl := document.CreateElement("select").(*dom.HTMLSelectElement)
-	selEl.Class().Add("form-control")
-	selEl.SetID(fmt.Sprintf("statusDropdown-%s", job.ID))
-	populateStatusDropdownOptions(document, selEl)
-	statusCell.AppendChild(selEl)
-	selEl.AddEventListener("change", true, func(e dom.Event) {
-		jobId := strings.Split(selEl.ID(), "-")[1]
-		newStatus := jobs.JobStatusList[selEl.SelectedIndex]
-		job := jobs.NewJob("", "", newStatus, "", "")
+	statusSelectElement := document.CreateElement("select").(*dom.HTMLSelectElement)
+	statusSelectElement.Class().Add("form-control")
+	statusSelectElement.SetID(fmt.Sprintf("statusDropdown-%s", job.ID))
+	populateStatusDropdownOptions(document, statusSelectElement, job.Status)
+	statusCell.AppendChild(statusSelectElement)
+	statusSelectElement.AddEventListener("change", true, func(e dom.Event) {
+		jobId := strings.Split(statusSelectElement.ID(), "-")[1]
+		job := jobs.NewJob("", "", job.Status, "", "")
 		updateJob(jobId, job)
 	})
-	selEl.SelectedIndex = jobs.GetStatusIndex(job.Status)
-	row.InsertCell(4).SetTextContent(job.Customer)
-	row.InsertCell(5).SetTextContent(job.Description)
+
+	// Customer
+	customerCell := row.InsertCell(4)
+	customerCell.SetContentEditable("true")
+	customerSelectElement := document.CreateElement("select").(*dom.HTMLSelectElement)
+	customerSelectElement.Class().Add("form-control")
+	customerSelectElement.SetID(fmt.Sprintf("customerDropdown-%s", job.ID))
+	populateCustomerDropdownOptions(document, customerSelectElement, job.Customer)
+	customerCell.AppendChild(customerSelectElement)
+	customerSelectElement.AddEventListener("change", true, func(e dom.Event) {
+		jobId := strings.Split(customerSelectElement.ID(), "-")[1]
+		job := jobs.NewJob("", "", "", job.Customer, "")
+		updateJob(jobId, job)
+	})
+
+	// Description
+	decodedDescription, err := base64.StdEncoding.DecodeString(job.Description)
+	if err != nil {
+		log.Fatal(err)
+	}
+	descriptionCell := row.InsertCell(5)
+	descriptionCell.SetContentEditable("true")
+	descriptionTextArea := document.CreateElement("textarea").(*dom.HTMLTextAreaElement)
+	descriptionTextArea.SetID(fmt.Sprintf("descriptionText-%s", job.ID))
+	descriptionTextArea.Class().Add("form-control")
+	descriptionCell.AppendChild(descriptionTextArea)
+	descriptionTextArea.SetTextContent(string(decodedDescription))
+	descriptionTextArea.AddEventListener("change", true, func(e dom.Event) {
+		jobId := strings.Split(descriptionTextArea.ID(), "-")[1]
+		newDescription := descriptionTextArea.Value
+		job := jobs.NewJob("", "", "", "", newDescription)
+		updateJob(jobId, job)
+	})
 }
 
 func showUserInput(document dom.Document) {

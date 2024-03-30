@@ -10,12 +10,6 @@ import (
 
 const JobsDateFormat string = "2006-01-02"
 
-// TODO remove hardcoding
-var CustomerList []string = []string{
-	"Adelina",
-	"Stuzzlini",
-}
-
 type Job struct {
 	ID           string    `json:"id"`
 	OrderDate    time.Time `json:"order_date"`
@@ -49,8 +43,15 @@ func (js *JobService) UpdateJob(id string, newJ *Job) error {
 	if !ok {
 		return fmt.Errorf("job %s not found", id)
 	}
+
 	if newJ.Status != "" {
 		curr.Status = newJ.Status
+	}
+	if newJ.Customer != "" {
+		curr.Customer = newJ.Customer
+	}
+	if newJ.Description != "" {
+		curr.Description = newJ.Description
 	}
 
 	js.jobs[id] = curr

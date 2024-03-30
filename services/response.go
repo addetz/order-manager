@@ -1,12 +1,13 @@
 package jobs
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"net/http"
 )
 
-func NewBackendResponse(resp *http.Response) ([]*Job, error) {
+func NewJobsResponse(resp *http.Response) ([]*Job, error) {
 	body, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
@@ -14,6 +15,21 @@ func NewBackendResponse(resp *http.Response) ([]*Job, error) {
 	}
 
 	var bs []*Job
+	if err := json.Unmarshal(body, &bs); err != nil {
+		return nil, err
+	}
+
+	return bs, nil
+}
+
+func NewCustomersResponse(resp *http.Response) ([]*Customer, error) {
+	body, err := io.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	var bs []*Customer
 	if err := json.Unmarshal(body, &bs); err != nil {
 		return nil, err
 	}
@@ -32,6 +48,6 @@ func NewJob(orderDate string, deadline string, status string,
 	}
 	j.Status = status
 	j.Customer = customer
-	j.Description = description
+	j.Description = base64.StdEncoding.EncodeToString([]byte(description))
 	return j
 }

@@ -18,6 +18,7 @@ const (
 )
 
 func main() {
+	cs := jobs.NewCustomerService()
 	js := jobs.NewJobService()
 
 	// Read port if one is set
@@ -46,8 +47,7 @@ func main() {
 	e.File("/favicon.ico", "layout/favicon.ico")
 
 	e.GET("/jobs", func(c echo.Context) error {
-		jobs := js.ListJobs()
-		return c.JSON(http.StatusOK, jobs)
+		return c.JSON(http.StatusOK, js.ListJobs())
 	})
 
 	e.POST("/jobs", func(c echo.Context) error {
@@ -63,6 +63,10 @@ func main() {
 		json.NewDecoder(c.Request().Body).Decode(job)
 		js.UpdateJob(id, job)
 		return c.JSON(http.StatusOK, nil)
+	})
+
+	e.GET("/customers", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, cs.ListCustomers())
 	})
 
 	log.Printf("Listening on localhost:%s...\n", port)

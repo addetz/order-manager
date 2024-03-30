@@ -7,18 +7,7 @@ import (
 )
 
 func openJobsFile() []*Job {
-	return openFile("data/jobs.json")
-}
-
-// func openCustomersFile() []string {
-// 	return openFile("data/customers.txt")
-// }
-
-func writeJobsFile(rows []*Job) {
-	updateFile("data/jobs.json", rows)
-}
-
-func openFile(filepath string) []*Job {
+	filepath := "data/jobs.json"
 	file, err := os.ReadFile(filepath)
 	if err != nil {
 		log.Fatal("Error opening file:", err)
@@ -29,6 +18,24 @@ func openFile(filepath string) []*Job {
 	}
 
 	return datas
+}
+
+func openCustomersFile() []*Customer {
+	filepath := "data/customers.json"
+	file, err := os.ReadFile(filepath)
+	if err != nil {
+		log.Fatal("Error opening file:", err)
+	}
+	datas := make([]*Customer, 0)
+	if err := json.Unmarshal(file, &datas); err != nil {
+		log.Fatal("Error unmarshalling file:", err)
+	}
+
+	return datas
+}
+
+func writeJobsFile(rows []*Job) {
+	updateFile("data/jobs.json", rows)
 }
 
 func updateFile(filepath string, rows []*Job) {
