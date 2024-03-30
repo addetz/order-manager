@@ -23,11 +23,15 @@ func NewBackendResponse(resp *http.Response) ([]*Job, error) {
 
 func NewJob(orderDate string, deadline string, status string,
 	customer string, description string) *Job {
-	return &Job{
-		OrderDate:    *getFormattedDate(orderDate),
-		DeadlineDate: *getFormattedDate(deadline),
-		Status:       status,
-		Customer:     customer,
-		Description:  description,
+	j := &Job{}
+	if orderDate != "" {
+		j.OrderDate = *getFormattedDate(orderDate)
 	}
+	if deadline != "" {
+		j.DeadlineDate = *getFormattedDate(deadline)
+	}
+	j.Status = status
+	j.Customer = customer
+	j.Description = description
+	return j
 }

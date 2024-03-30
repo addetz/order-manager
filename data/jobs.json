@@ -1,18 +1,1 @@
-[
-  {
-    "id": "#2",
-    "order_date": "2024-03-04T00:00:00Z",
-    "deadline_date": "2024-03-10T00:00:00Z",
-    "status": "New ⭐️",
-    "customer": "Stuzzlini",
-    "description": "dfghjnkml,.;"
-  },
-  {
-    "id": "#1",
-    "order_date": "2024-03-09T00:00:00Z",
-    "deadline_date": "2024-03-13T00:00:00Z",
-    "status": "Invoiced 🧾",
-    "customer": "Adelina",
-    "description": "sdfghjkl;"
-  }
-]
+[{"id":"job2","order_date":"2024-03-04T00:00:00Z","deadline_date":"2024-03-10T00:00:00Z","status":"New ⭐️","customer":"Stuzzlini","description":"dfghjnkml,.;"},{"id":"job1","order_date":"2024-03-09T00:00:00Z","deadline_date":"2024-03-13T00:00:00Z","status":"New ⭐️","customer":"Adelina","description":"sdfghjkl;"}]

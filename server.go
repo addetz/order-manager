@@ -57,6 +57,14 @@ func main() {
 		return c.JSON(http.StatusCreated, nil)
 	})
 
+	e.POST("/jobs/:id", func(c echo.Context) error {
+		id := c.Param("id")
+		job := &jobs.Job{}
+		json.NewDecoder(c.Request().Body).Decode(job)
+		js.UpdateJob(id, job)
+		return c.JSON(http.StatusOK, nil)
+	})
+
 	log.Printf("Listening on localhost:%s...\n", port)
 	if err := s.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatal(err)

@@ -10,12 +10,6 @@ import (
 
 const JobsDateFormat string = "2006-01-02"
 
-var JobStatusList []string = []string{
-	"New ⭐️",
-	"Completed & Shipped ✅",
-	"Invoiced 🧾",
-}
-
 // TODO remove hardcoding
 var CustomerList []string = []string{
 	"Adelina",
@@ -44,10 +38,24 @@ func NewJobService() *JobService {
 }
 
 func (js *JobService) AddJob(j *Job) {
-	id := fmt.Sprintf("#%d", len(js.jobs)+1)
+	id := fmt.Sprintf("job%d", len(js.jobs)+1)
 	j.ID = id
 	js.jobs[id] = j
 	js.exportJobs()
+}
+
+func (js *JobService) UpdateJob(id string, newJ *Job) error {
+	curr, ok := js.jobs[id]
+	if !ok {
+		return fmt.Errorf("job %s not found", id)
+	}
+	if newJ.Status != "" {
+		curr.Status = newJ.Status
+	}
+
+	js.jobs[id] = curr
+	js.exportJobs()
+	return nil
 }
 
 func (js *JobService) ListJobs() []*Job {

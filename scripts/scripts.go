@@ -4,8 +4,10 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	jobs "github.com/addetz/order-manager/services"
 	"honnef.co/go/js/dom"
@@ -14,26 +16,36 @@ import (
 func main() {
 	document := dom.GetWindow().Document()
 	populateAllJobs(document)
+
 	addRowBtn := document.GetElementByID("addRowBtn")
 	submitBtn := document.GetElementByID("submitBtn")
+	cancelBtn := document.GetElementByID("cancelBtn")
 	addRowBtn.AddEventListener("click", true, func(e dom.Event) {
 		showUserInput(document)
 	})
 	submitBtn.AddEventListener("click", true, func(e dom.Event) {
 		submitJob(document)
 	})
+	cancelBtn.AddEventListener("click", true, func(e dom.Event) {
+		hideUserInput(document)
+	})
+
 	statusDropdown := document.GetElementByID("statusDropdown").(*dom.HTMLSelectElement)
-	for _, c := range jobs.JobStatusList {
-		o := document.CreateElement("option")
-		o.SetTextContent(c)
-		statusDropdown.AppendChild(o)
-	}
+	populateStatusDropdownOptions(document, statusDropdown)
 
 	customerDropdown := document.GetElementByID("customerDropdown").(*dom.HTMLSelectElement)
 	for _, c := range jobs.CustomerList {
 		o := document.CreateElement("option")
 		o.SetTextContent(c)
 		customerDropdown.AppendChild(o)
+	}
+}
+
+func populateStatusDropdownOptions(document dom.Document, statusDropdown *dom.HTMLSelectElement) {
+	for _, c := range jobs.JobStatusList {
+		o := document.CreateElement("option")
+		o.SetTextContent(c)
+		statusDropdown.AppendChild(o)
 	}
 }
 
@@ -55,18 +67,31 @@ func populateJobsCallback(document dom.Document, jobs []*jobs.Job) {
 	newBody := document.CreateElement("tbody")
 	ts := newBody.(*dom.HTMLTableSectionElement)
 	for _, e := range jobs {
-		populateJob(ts, e)
+		populateJob(document, ts, e)
 	}
 	oldBody := document.GetElementByID("jobsTable").GetElementsByTagName("tbody")[0]
 	document.GetElementByID("jobsTable").ReplaceChild(newBody, oldBody)
 }
 
-func populateJob(tableSection *dom.HTMLTableSectionElement, job *jobs.Job) {
+func populateJob(document dom.Document, tableSection *dom.HTMLTableSectionElement, job *jobs.Job) {
 	row := tableSection.InsertRow(0)
 	row.InsertCell(0).SetTextContent(job.ID)
 	row.InsertCell(1).SetTextContent(job.OrderDate.Format(jobs.JobsDateFormat))
 	row.InsertCell(2).SetTextContent(job.DeadlineDate.Format(jobs.JobsDateFormat))
-	row.InsertCell(3).SetTextContent(job.Status)
+	statusCell := row.InsertCell(3)
+	statusCell.SetContentEditable("true")
+	selEl := document.CreateElement("select").(*dom.HTMLSelectElement)
+	selEl.Class().Add("form-control")
+	selEl.SetID(fmt.Sprintf("statusDropdown-%s", job.ID))
+	populateStatusDropdownOptions(document, selEl)
+	statusCell.AppendChild(selEl)
+	selEl.AddEventListener("change", true, func(e dom.Event) {
+		jobId := strings.Split(selEl.ID(), "-")[1]
+		newStatus := jobs.JobStatusList[selEl.SelectedIndex]
+		job := jobs.NewJob("", "", newStatus, "", "")
+		updateJob(jobId, job)
+	})
+	selEl.SelectedIndex = jobs.GetStatusIndex(job.Status)
 	row.InsertCell(4).SetTextContent(job.Customer)
 	row.InsertCell(5).SetTextContent(job.Description)
 }
@@ -106,6 +131,21 @@ func submitJob(document dom.Document) {
 
 	hideUserInput(document)
 	populateAllJobs(document)
+}
+
+func updateJob(id string, job *jobs.Job) {
+	payload, err := json.Marshal(job)
+	if err != nil {
+		log.Fatalf("UpdateJob Marshal Error:%v", err)
+		return
+	}
+	go func(id string, payload []byte) {
+		url := fmt.Sprintf("/jobs/%s", id)
+		resp, err := http.Post(url, "application/json", bytes.NewBuffer(payload))
+		if err != nil || resp.StatusCode != http.StatusOK {
+			log.Fatalf("UpdateJob Request Error:%v\n", err)
+		}
+	}(id, payload)
 }
 
 func hideUserInput(document dom.Document) {
