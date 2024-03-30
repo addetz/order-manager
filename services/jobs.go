@@ -7,12 +7,13 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	b64 "encoding/base64"
+
+	"github.com/addetz/order-manager/data"
 )
 
-const JobsDateFormat string = "Mon 02 Jan 2006"
-
-//go:embed jobs
-var jobsInput string
+const JobsDateFormat string = "2006-01-02"
 
 var JobStatusList []string = []string{
 	"New ⭐️",
@@ -20,13 +21,19 @@ var JobStatusList []string = []string{
 	"Invoiced 🧾",
 }
 
+// TODO remove hardcoding
+var CustomerList []string = []string{
+	"Adelina",
+	"Stuzzlini",
+}
+
 type Job struct {
-	ID           string
-	OrderDate    time.Time
-	DeadlineDate time.Time
-	Status       string
-	Customer     string
-	Description  string
+	ID           string    `json:"id"`
+	OrderDate    time.Time `json:"order_date"`
+	DeadlineDate time.Time `json:"deadline_date"`
+	Status       string    `json:"status"`
+	Customer     string    `json:"customer"`
+	Description  string    `json:"description"`
 }
 
 type JobService struct {
@@ -41,18 +48,11 @@ func NewJobService() *JobService {
 	return js
 }
 
-func (js *JobService) AddJob(orderDate string, deadline string, customer string,
-	description string) {
+func (js *JobService) AddJob(j *Job) {
 	id := fmt.Sprintf("#%d", len(js.jobs)+1)
-	order := &Job{
-		ID:           id,
-		OrderDate:    *getFormattedDate(orderDate),
-		DeadlineDate: *getFormattedDate(deadline),
-		Status:       JobStatusList[0],
-		Customer:     customer,
-		Description:  description,
-	}
-	js.jobs[order.ID] = order
+	j.ID = id
+	js.jobs[id] = j
+	js.exportJobs()
 }
 
 func (js *JobService) ListJobs() []*Job {
@@ -67,18 +67,31 @@ func (js *JobService) ListJobs() []*Job {
 }
 
 func (js *JobService) importJobs() {
-	rows := strings.Split(jobsInput, "\n")
+	rows := data.OpenJobsFile()
 	for _, row := range rows {
 		cells := strings.Split(row, ",")
+		decodedDescription, _ := b64.StdEncoding.DecodeString(cells[5])
 		job := &Job{
 			ID:           cells[0],
 			OrderDate:    *getFormattedDate(cells[1]),
 			DeadlineDate: *getFormattedDate(cells[2]),
 			Status:       cells[3],
 			Customer:     cells[4],
-			Description:  cells[5],
+			Description:  string(decodedDescription),
 		}
 		js.jobs[job.ID] = job
+	}
+}
+
+func (js *JobService) exportJobs() {
+	jobsList := js.ListJobs()
+	rows := make([]string, len(jobsList))
+	for i, j := range jobsList {
+		orderDate := j.OrderDate.Format(JobsDateFormat)
+		deadlineDate := j.DeadlineDate.Format(JobsDateFormat)
+		description := b64.StdEncoding.EncodeToString([]byte(j.Description))
+		rows[i] = fmt.Sprintf("%s,%s,%s,%s,%s,%s", j.ID, orderDate, deadlineDate,
+			j.Status, j.Customer, description)
 	}
 }
 

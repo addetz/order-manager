@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
+	jobs "github.com/addetz/order-manager/services"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -16,6 +18,8 @@ const (
 )
 
 func main() {
+	js := jobs.NewJobService()
+
 	// Read port if one is set
 	port := readPort()
 
@@ -40,6 +44,18 @@ func main() {
 	e.File("/scripts.js", "scripts/scripts.js")
 	e.File("/scripts.js.map", "scripts/scripts.js.map")
 	e.File("/favicon.ico", "layout/favicon.ico")
+
+	e.GET("/jobs", func(c echo.Context) error {
+		jobs := js.ListJobs()
+		return c.JSON(http.StatusOK, jobs)
+	})
+
+	e.POST("/jobs", func(c echo.Context) error {
+		job := &jobs.Job{}
+		json.NewDecoder(c.Request().Body).Decode(job)
+		js.AddJob(job)
+		return c.JSON(http.StatusOK, nil)
+	})
 
 	log.Printf("Listening on localhost:%s...\n", port)
 	if err := s.ListenAndServe(); err != http.ErrServerClosed {
