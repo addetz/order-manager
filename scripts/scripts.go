@@ -90,17 +90,22 @@ func submitJob(document dom.Document) {
 	description := document.GetElementByID("descriptionInput").(*dom.HTMLTextAreaElement)
 	job := jobs.NewJob(orderDate.Value, deadlineDate.Value, statusElement.Text, customerElement.Text,
 		description.Value)
+	payload, err := json.Marshal(job)
+	if err != nil {
+		log.Fatalf("PostJob:%v", err)
+		return
+	}
 
+	// JavaScript callbacks cannot be blocking
 	go func() {
-		payload, _ := json.Marshal(job)
-		bodyReader := bytes.NewReader(payload)
-		_, err := http.NewRequest(http.MethodPost, "/jobs", bodyReader)
-		if err != nil {
-			log.Fatal(err)
+		resp, err := http.Post("/jobs", "application/json", bytes.NewBuffer(payload))
+		if err != nil || resp.StatusCode != http.StatusCreated {
+			log.Fatalf("PostJob:%v\n", err)
 		}
 	}()
 
 	hideUserInput(document)
+	populateAllJobs(document)
 }
 
 func hideUserInput(document dom.Document) {

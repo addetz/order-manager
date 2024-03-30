@@ -54,7 +54,7 @@ func main() {
 		job := &jobs.Job{}
 		json.NewDecoder(c.Request().Body).Decode(job)
 		js.AddJob(job)
-		return c.JSON(http.StatusOK, nil)
+		return c.JSON(http.StatusCreated, nil)
 	})
 
 	log.Printf("Listening on localhost:%s...\n", port)
