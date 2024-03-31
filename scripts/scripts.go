@@ -19,7 +19,7 @@ const DIVIDER = "#"
 
 func main() {
 	document := dom.GetWindow().Document()
-	populateAllJobs(document)
+	populateAllJobs(document, "")
 
 	addRowBtn := document.GetElementByID("addRowBtn")
 	submitBtn := document.GetElementByID("submitBtn")
@@ -38,6 +38,33 @@ func main() {
 	populateStatusDropdownOptions(document, statusDropdown, "")
 	customerDropdown := document.GetElementByID("customerDropdown").(*dom.HTMLSelectElement)
 	populateCustomerDropdownOptions(document, customerDropdown, "")
+	addCustomerFilter(document)
+}
+
+func addCustomerFilter(document dom.Document) {
+	filterCustomerDropdown := document.GetElementByID("filterCustomerDropdown").(*dom.HTMLSelectElement)
+	o := document.CreateElement("option")
+	o.SetTextContent("All")
+	filterCustomerDropdown.AppendChild(o)
+	populateCustomerDropdownOptions(document, filterCustomerDropdown, "")
+	filterCustomerDropdown.AddEventListener("change", true, func (e dom.Event)  {
+		filter := filterCustomerDropdown.SelectedOptions()[0].Value
+		go func(document dom.Document, filter string) {
+			if filter == "All" {
+				populateAllJobs(document, "")
+				return
+			}
+			resp, err := http.Get(fmt.Sprintf("/customers/search?name=%s", filter))
+			if err != nil {
+				log.Fatal(err)
+			}
+			customer, err := jobs.NewCustomerSearchResponse(resp)
+			if err != nil {
+				log.Fatal(err)
+			}
+			populateAllJobs(document, customer.ID)
+		}(document, filter)
+	})
 }
 
 func populateStatusDropdownOptions(document dom.Document,
@@ -86,9 +113,13 @@ func populateCustomerDropdownOptionsCallback(document dom.Document,
 	}
 }
 
-func populateAllJobs(document dom.Document) {
+func populateAllJobs(document dom.Document, filter string) {
 	go func(callback func(document dom.Document, jobs []*jobs.Job)) {
-		resp, err := http.Get("/jobs")
+		url := "/jobs"
+		if filter != "" {
+			url = fmt.Sprintf("/jobs?customerID=%s", filter)
+		}
+		resp, err := http.Get(url)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -261,7 +292,7 @@ func submitJob(document dom.Document) {
 	}()
 
 	hideUserInput(document)
-	populateAllJobs(document)
+	populateAllJobs(document, "")
 }
 
 func deleteJob(id string, document dom.Document) {
@@ -275,7 +306,7 @@ func deleteJob(id string, document dom.Document) {
 		if err != nil || resp.StatusCode != http.StatusOK {
 			log.Fatalf("DeleteJob Error:%v\n", err)
 		}
-		populateAllJobs(document)
+		populateAllJobs(document, "")
 	}(id)
 }
 
@@ -291,7 +322,7 @@ func updateJob(document dom.Document, id string, job *jobs.Job) {
 		if err != nil || resp.StatusCode != http.StatusOK {
 			log.Fatalf("UpdateJob Request Error:%v\n", err)
 		}
-		populateAllJobs(document)
+		populateAllJobs(document, "")
 	}(id, payload)
 }
 
@@ -303,7 +334,7 @@ func hideUserInput(document dom.Document) {
 	jobsContainer.Class().Remove("d-none")
 	addRowContainer.Class().Remove("d-none")
 
-	populateAllJobs(document)
+	populateAllJobs(document, "")
 	orderDate := document.GetElementByID("orderDateInput").(*dom.HTMLInputElement)
 	orderDate.Value = ""
 	deadlineDate := document.GetElementByID("deadlineInput").(*dom.HTMLInputElement)

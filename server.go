@@ -52,6 +52,10 @@ func main() {
 
 	// List operations
 	e.GET("/jobs", func(c echo.Context) error {
+		customerID := c.QueryParam("customerID")
+		if customerID != "" {
+			return c.JSON(http.StatusOK, js.FilterJobs(customerID))
+		}
 		return c.JSON(http.StatusOK, js.ListJobs())
 	})
 

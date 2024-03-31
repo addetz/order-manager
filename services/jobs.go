@@ -79,6 +79,22 @@ func (js *JobService) ListJobs() []*Job {
 	for _, o := range js.jobs {
 		jobsList = append(jobsList, o)
 	}
+	sortJobs(jobsList)
+	return jobsList
+}
+
+func (js *JobService) FilterJobs(customerID string) []*Job {
+	jobsList := make([]*Job, 0)
+	for _, o := range js.jobs {
+		if o.CustomerID == customerID {
+			jobsList = append(jobsList, o)
+		}
+	}
+	sortJobs(jobsList)
+	return jobsList
+}
+
+func sortJobs(jobsList []*Job) {
 	// sort by status first
 	sort.Slice(jobsList, func(i, j int) bool {
 		return getStatusIndex(jobsList[i].Status) < getStatusIndex(jobsList[j].Status)
@@ -91,8 +107,6 @@ func (js *JobService) ListJobs() []*Job {
 		// leave unsorted otherwise
 		return true
 	})
-
-	return jobsList
 }
 
 func getStatusIndex(status string) int {
