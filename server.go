@@ -44,7 +44,6 @@ func main() {
 	// Set up scripts
 	e.File("/scripts.js", "scripts/scripts.js")
 	e.File("/scripts.js.map", "scripts/scripts.js.map")
-	e.File("/favicon.ico", "layout/favicon.ico")
 
 	e.GET("/jobs", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, js.ListJobs())
