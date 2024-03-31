@@ -9,10 +9,13 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	jobs "github.com/addetz/order-manager/services"
 	"honnef.co/go/js/dom"
 )
+
+const DIVIDER = "#"
 
 func main() {
 	document := dom.GetWindow().Document()
@@ -111,68 +114,68 @@ func populateJob(document dom.Document,
 	tableSection *dom.HTMLTableSectionElement,
 	job *jobs.Job) {
 	row := tableSection.InsertRow(0)
-	row.InsertCell(0).SetTextContent(job.ID)
+	row.SetID(createElementID("row", job.ID))
 
 	// Order Date
-	orderDateCell := row.InsertCell(1)
+	orderDateCell := row.InsertCell(0)
 	orderDateCell.SetContentEditable("true")
 	orderDatePicker := document.CreateElement("input").(*dom.HTMLInputElement)
 	orderDatePicker.SetAttribute("type", "date")
 	orderDatePicker.Class().Add("form-control")
-	orderDatePicker.SetID(fmt.Sprintf("orderDate-%s", job.ID))
+	orderDatePicker.SetID(createElementID("orderDate", job.ID))
 	orderDateCell.AppendChild(orderDatePicker)
 	orderDatePicker.Value = job.OrderDate.Format(jobs.JobsDateFormat)
 	orderDatePicker.AddEventListener("change", true, func(e dom.Event) {
-		jobId := strings.Split(orderDatePicker.ID(), "-")[1]
+		jobId := extractJobIDFromElement(orderDatePicker.ID())
 		newOrderDate := orderDatePicker.Value
 		job := jobs.NewJob(newOrderDate, "", "", "", "")
-		updateJob(jobId, job)
+		updateJob(document, jobId, job)
 	})
 
 	// Deadline Date
-	deadlineDateCell := row.InsertCell(2)
+	deadlineDateCell := row.InsertCell(1)
 	deadlineDateCell.SetContentEditable("true")
 	deadlineDatePicker := document.CreateElement("input").(*dom.HTMLInputElement)
 	deadlineDatePicker.SetAttribute("type", "date")
 	deadlineDatePicker.Class().Add("form-control")
-	deadlineDatePicker.SetID(fmt.Sprintf("deadlineDate-%s", job.ID))
+	deadlineDatePicker.SetID(createElementID("deadlineDate", job.ID))
 	deadlineDateCell.AppendChild(deadlineDatePicker)
 	deadlineDatePicker.Value = job.DeadlineDate.Format(jobs.JobsDateFormat)
 	deadlineDatePicker.AddEventListener("change", true, func(e dom.Event) {
-		jobId := strings.Split(deadlineDatePicker.ID(), "-")[1]
+		jobId := extractJobIDFromElement(deadlineDatePicker.ID())
 		newDeadlineDate := deadlineDatePicker.Value
 		job := jobs.NewJob("", newDeadlineDate, "", "", "")
-		updateJob(jobId, job)
+		updateJob(document, jobId, job)
 	})
 
 	// Status
-	statusCell := row.InsertCell(3)
+	statusCell := row.InsertCell(2)
 	statusCell.SetContentEditable("true")
 	statusSelectElement := document.CreateElement("select").(*dom.HTMLSelectElement)
 	statusSelectElement.Class().Add("form-control")
-	statusSelectElement.SetID(fmt.Sprintf("statusDropdown-%s", job.ID))
+	statusSelectElement.SetID(createElementID("statusDropdown", job.ID))
 	populateStatusDropdownOptions(document, statusSelectElement, job.Status)
 	statusCell.AppendChild(statusSelectElement)
 	statusSelectElement.AddEventListener("change", true, func(e dom.Event) {
-		jobId := strings.Split(statusSelectElement.ID(), "-")[1]
+		jobId := extractJobIDFromElement(statusSelectElement.ID())
 		newStatus := statusSelectElement.SelectedOptions()[0].Value
 		job := jobs.NewJob("", "", newStatus, "", "")
-		updateJob(jobId, job)
+		updateJob(document, jobId, job)
 	})
-
+	
 	// Customer
-	customerCell := row.InsertCell(4)
+	customerCell := row.InsertCell(3)
 	customerCell.SetContentEditable("true")
 	customerSelectElement := document.CreateElement("select").(*dom.HTMLSelectElement)
 	customerSelectElement.Class().Add("form-control")
-	customerSelectElement.SetID(fmt.Sprintf("customerDropdown-%s", job.ID))
+	customerSelectElement.SetID(createElementID("customerDropdown", job.ID))
 	populateCustomerDropdownOptions(document, customerSelectElement, job.Customer)
 	customerCell.AppendChild(customerSelectElement)
 	customerSelectElement.AddEventListener("change", true, func(e dom.Event) {
-		jobId := strings.Split(customerSelectElement.ID(), "-")[1]
+		jobId := extractJobIDFromElement(customerSelectElement.ID())
 		newCustomer := customerSelectElement.SelectedOptions()[0].Value
 		job := jobs.NewJob("", "", "", newCustomer, "")
-		updateJob(jobId, job)
+		updateJob(document, jobId, job)
 	})
 
 	// Description
@@ -180,36 +183,39 @@ func populateJob(document dom.Document,
 	if err != nil {
 		log.Fatal(err)
 	}
-	descriptionCell := row.InsertCell(5)
+	descriptionCell := row.InsertCell(4)
 	descriptionCell.SetContentEditable("true")
 	descriptionTextArea := document.CreateElement("textarea").(*dom.HTMLTextAreaElement)
-	descriptionTextArea.SetID(fmt.Sprintf("descriptionText-%s", job.ID))
+	descriptionTextArea.SetID(createElementID("descriptionText", job.ID))
 	descriptionTextArea.Class().Add("form-control")
 	descriptionCell.AppendChild(descriptionTextArea)
 	descriptionTextArea.SetTextContent(string(decodedDescription))
 	descriptionTextArea.AddEventListener("change", true, func(e dom.Event) {
-		jobId := strings.Split(descriptionTextArea.ID(), "-")[1]
+		jobId := extractJobIDFromElement(descriptionTextArea.ID())
 		newDescription := descriptionTextArea.Value
 		job := jobs.NewJob("", "", "", "", newDescription)
-		updateJob(jobId, job)
+		updateJob(document, jobId, job)
 	})
 
 	// Delete button
-	actionCell := row.InsertCell(6)
+	actionCell := row.InsertCell(5)
 	deleteBtn := document.CreateElement("button").(*dom.HTMLButtonElement)
-	deleteBtn.SetID(fmt.Sprintf("deleteBtn-%s", job.ID))
+	deleteBtn.SetID(createElementID("deleteBtn", job.ID))
 	deleteBtn.Class().Add("btn")
-	deleteBtn.Class().Add("btn-warning")
+	deleteBtn.Class().Add("btn-info")
 	deleteBtn.Class().Add("btn-lg")
-	deleteBtn.SetTextContent("Delete Row")
+	deleteBtn.SetTextContent("Delete Row?")
 	actionCell.AppendChild(deleteBtn)
 	deleteBtn.AddEventListener("click", true, func(e dom.Event) {
-		jobId := strings.Split(deleteBtn.ID(), "-")[1]
+		jobId := extractJobIDFromElement(deleteBtn.ID())
 		answer := dom.GetWindow().Confirm("Are you sure you want to delete row?")
 		if answer {
 			deleteJob(jobId, document)
 		}
 	})
+
+	// At the end apply the style
+	applyRowStyle(row, job)
 }
 
 func showUserInput(document dom.Document) {
@@ -263,7 +269,7 @@ func deleteJob(id string, document dom.Document) {
 	}(id)
 }
 
-func updateJob(id string, job *jobs.Job) {
+func updateJob(document dom.Document, id string, job *jobs.Job) {
 	payload, err := json.Marshal(job)
 	if err != nil {
 		log.Fatalf("UpdateJob Marshal Error:%v", err)
@@ -275,6 +281,7 @@ func updateJob(id string, job *jobs.Job) {
 		if err != nil || resp.StatusCode != http.StatusOK {
 			log.Fatalf("UpdateJob Request Error:%v\n", err)
 		}
+		populateAllJobs(document)
 	}(id, payload)
 }
 
@@ -297,4 +304,69 @@ func hideUserInput(document dom.Document) {
 	customerDropdown.SelectedIndex = 0
 	description := document.GetElementByID("descriptionInput").(*dom.HTMLTextAreaElement)
 	description.Value = ""
+}
+
+func calculateWorkingDays(dateTo time.Time) int {
+	nowString := time.Now().Format(jobs.JobsDateFormat)
+	dateFrom := *jobs.GetFormattedDate(nowString)
+
+	if dateTo.Before(dateFrom) {
+		return -1
+	}
+
+	days := 0
+	for {
+		if dateFrom.Equal(dateTo) {
+			days++
+			break
+		}
+		if dateFrom.Weekday() != 6 && dateFrom.Weekday() != 0 {
+			days++
+		}
+		dateFrom = dateFrom.Add(time.Hour * 24)
+	}
+
+	return days
+}
+
+func applyRowStyle(row *dom.HTMLTableRowElement, job *jobs.Job) {
+	// this job is finished
+	if job.Status == jobs.JobStatusList[2] {
+		row.Class().Add("finished-row")
+		return
+	}
+	
+	// this job is shipped
+	if job.Status == jobs.JobStatusList[1] {
+		row.Class().Add("shipped-row")
+		return
+	}
+
+	daysLeft := calculateWorkingDays(*job.DeadlineDate)
+
+	// the job is new and it is overdue
+	if job.Status == jobs.JobStatusList[0] && daysLeft == -1 {
+		row.Class().Add("overdue-row")
+		return
+	}
+
+	// the job is new and it is due next day
+	if job.Status == jobs.JobStatusList[0] && daysLeft == 1 {
+		row.Class().Add("danger-row")
+		return
+	}
+
+	// the job is new and there is less than a week left
+	if job.Status == jobs.JobStatusList[0] && daysLeft < 5 {
+		row.Class().Add("warning-row")
+		return
+	}
+}
+
+func createElementID(prefix, id string) string {
+	return fmt.Sprintf("%s%s%s", prefix, DIVIDER, id)
+}
+
+func extractJobIDFromElement(id string) string {
+	return strings.Split(id, DIVIDER)[1]
 }

@@ -6,6 +6,8 @@ import (
 	"log"
 	"sort"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const JobsDateFormat string = "2006-01-02"
@@ -32,7 +34,7 @@ func NewJobService() *JobService {
 }
 
 func (js *JobService) AddJob(j *Job) {
-	id := fmt.Sprintf("job%d", len(js.jobs)+1)
+	id := uuid.New().String()
 	j.ID = id
 	js.jobs[id] = j
 	js.exportJobs()
@@ -77,10 +79,29 @@ func (js *JobService) ListJobs() []*Job {
 	for _, o := range js.jobs {
 		jobsList = append(jobsList, o)
 	}
+	// sort by status first
 	sort.Slice(jobsList, func(i, j int) bool {
-		return jobsList[i].ID > jobsList[j].ID
+		return getStatusIndex(jobsList[i].Status) < getStatusIndex(jobsList[j].Status)
 	})
+	// sort the new ones by deadline
+	sort.SliceStable(jobsList, func(i, j int) bool {
+		if getStatusIndex(jobsList[i].Status) == 0 && getStatusIndex(jobsList[j].Status) == 0 {
+			return jobsList[i].DeadlineDate.After(*jobsList[j].DeadlineDate)
+		}
+		// leave unsorted otherwise
+		return true
+	})
+
 	return jobsList
+}
+
+func getStatusIndex(status string) int {
+	for i, s := range JobStatusList {
+		if s == status {
+			return i
+		}
+	}
+	return -1
 }
 
 func (js *JobService) importJobs() {
@@ -94,7 +115,7 @@ func (js *JobService) exportJobs() {
 	writeJobsFile(js.ListJobs())
 }
 
-func getFormattedDate(s string) *time.Time {
+func GetFormattedDate(s string) *time.Time {
 	t, err := time.Parse(JobsDateFormat, s)
 	if err != nil {
 		log.Fatal(err)
