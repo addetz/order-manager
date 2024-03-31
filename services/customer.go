@@ -65,6 +65,15 @@ func (cs *CustomerService) UpdateCustomer(id string, newCust *Customer) error {
 	return nil
 }
 
+func (cs *CustomerService) SearchCustomer(name string) (*Customer, error){
+		for _, c := range cs.customers {
+			if c.Name == name {
+				return c, nil
+			}
+		}
+		return nil, fmt.Errorf("no customer named %s found", name)
+}
+
 func (cs *CustomerService) exportCustomers() {
 	writeCustomersFile(cs.ListCustomers())
 }

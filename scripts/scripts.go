@@ -80,7 +80,7 @@ func populateCustomerDropdownOptionsCallback(document dom.Document,
 		o := document.CreateElement("option")
 		o.SetTextContent(c.Name)
 		customerDropdown.AppendChild(o)
-		if c.Name == currentValue {
+		if c.ID == currentValue {
 			customerDropdown.SelectedIndex = i
 		}
 	}
@@ -169,13 +169,23 @@ func populateJob(document dom.Document,
 	customerSelectElement := document.CreateElement("select").(*dom.HTMLSelectElement)
 	customerSelectElement.Class().Add("form-control")
 	customerSelectElement.SetID(createElementID("customerDropdown", job.ID))
-	populateCustomerDropdownOptions(document, customerSelectElement, job.Customer)
+	populateCustomerDropdownOptions(document, customerSelectElement, job.CustomerID)
 	customerCell.AppendChild(customerSelectElement)
 	customerSelectElement.AddEventListener("change", true, func(e dom.Event) {
 		jobId := extractJobIDFromElement(customerSelectElement.ID())
 		newCustomer := customerSelectElement.SelectedOptions()[0].Value
-		job := jobs.NewJob("", "", "", newCustomer, "")
-		updateJob(document, jobId, job)
+		go func(document dom.Document, newCustomer string, jobId string) {
+			resp, err := http.Get(fmt.Sprintf("/customers/search?name=%s", newCustomer))
+			if err != nil {
+				log.Fatal(err)
+			}
+			customer, err := jobs.NewCustomerSearchResponse(resp)
+			if err != nil {
+				log.Fatal(err)
+			}
+			newJob := jobs.NewJob("", "", "", customer.ID, "")
+			updateJob(document, jobId, newJob)
+		}(document, newCustomer, jobId)
 	})
 
 	// Description
@@ -335,7 +345,7 @@ func applyRowStyle(row *dom.HTMLTableRowElement, job *jobs.Job) {
 		row.Class().Add("finished-row")
 		return
 	}
-	
+
 	// this job is shipped
 	if job.Status == jobs.JobStatusList[1] {
 		row.Class().Add("shipped-row")

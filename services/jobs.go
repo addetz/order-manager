@@ -17,7 +17,7 @@ type Job struct {
 	OrderDate    *time.Time `json:"order_date"`
 	DeadlineDate *time.Time `json:"deadline_date"`
 	Status       string     `json:"status"`
-	Customer     string     `json:"customer"`
+	CustomerID   string     `json:"customer_id"`
 	Description  string     `json:"description"`
 }
 
@@ -57,8 +57,8 @@ func (js *JobService) UpdateJob(id string, newJ *Job) error {
 	if newJ.Status != "" {
 		curr.Status = newJ.Status
 	}
-	if newJ.Customer != "" {
-		curr.Customer = newJ.Customer
+	if newJ.CustomerID != "" {
+		curr.CustomerID = newJ.CustomerID
 	}
 	if newJ.Description != "" {
 		curr.Description = newJ.Description

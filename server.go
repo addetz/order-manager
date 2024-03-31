@@ -59,7 +59,7 @@ func main() {
 		return c.JSON(http.StatusOK, cs.ListCustomers())
 	})
 
-	// Create operations 
+	// Create operations
 	e.POST("/jobs", func(c echo.Context) error {
 		job := &jobs.Job{}
 		json.NewDecoder(c.Request().Body).Decode(job)
@@ -102,6 +102,16 @@ func main() {
 		id := c.Param("id")
 		js.DeleteJob(id)
 		return c.JSON(http.StatusOK, nil)
+	})
+
+	//Search customer
+	e.GET("/customers/search", func(c echo.Context) error {
+		customerName := c.QueryParam("name")
+		customer, err := cs.SearchCustomer(customerName)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err)
+		}
+		return c.JSON(http.StatusOK, customer)
 	})
 
 	log.Printf("Listening on localhost:%s...\n", port)
