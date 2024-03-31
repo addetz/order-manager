@@ -35,10 +35,17 @@ func openCustomersFile() []*Customer {
 }
 
 func writeJobsFile(rows []*Job) {
-	updateFile("data/jobs.json", rows)
+	filepath := "data/jobs.json"
+	bytes, err := json.Marshal(rows)
+	if err != nil {
+		log.Fatal("Error marshal rows:", err)
+
+	}
+	os.WriteFile(filepath, bytes, os.ModePerm)
 }
 
-func updateFile(filepath string, rows []*Job) {
+func writeCustomersFile(rows []*Customer) {
+	filepath := "data/customers.json"
 	bytes, err := json.Marshal(rows)
 	if err != nil {
 		log.Fatal("Error marshal rows:", err)

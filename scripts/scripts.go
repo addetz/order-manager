@@ -162,7 +162,7 @@ func populateJob(document dom.Document,
 		job := jobs.NewJob("", "", newStatus, "", "")
 		updateJob(document, jobId, job)
 	})
-	
+
 	// Customer
 	customerCell := row.InsertCell(3)
 	customerCell.SetContentEditable("true")
@@ -203,7 +203,7 @@ func populateJob(document dom.Document,
 	deleteBtn.SetID(createElementID("deleteBtn", job.ID))
 	deleteBtn.Class().Add("btn")
 	deleteBtn.Class().Add("btn-info")
-	deleteBtn.Class().Add("btn-lg")
+	deleteBtn.Class().Add("mt-2")
 	deleteBtn.SetTextContent("Delete Row?")
 	actionCell.AppendChild(deleteBtn)
 	deleteBtn.AddEventListener("click", true, func(e dom.Event) {

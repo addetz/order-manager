@@ -41,14 +41,25 @@ func main() {
 
 	// Set up the root file
 	e.Static("/", "layout")
+	// Set up customer view
+	e.Static("/customerView", "layout-customers")
+
 	// Set up scripts
 	e.File("/scripts.js", "scripts/scripts.js")
 	e.File("/scripts.js.map", "scripts/scripts.js.map")
+	e.File("/customerView/scripts-customers.js", "scripts-customers/scripts-customers.js")
+	e.File("/customerView/scripts-customers.js.map", "scripts-customers/scripts-customers.js.map")
 
+	// List operations
 	e.GET("/jobs", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, js.ListJobs())
 	})
 
+	e.GET("/customers", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, cs.ListCustomers())
+	})
+
+	// Create operations 
 	e.POST("/jobs", func(c echo.Context) error {
 		job := &jobs.Job{}
 		json.NewDecoder(c.Request().Body).Decode(job)
@@ -56,6 +67,14 @@ func main() {
 		return c.JSON(http.StatusCreated, nil)
 	})
 
+	e.POST("/customers", func(c echo.Context) error {
+		cust := &jobs.Customer{}
+		json.NewDecoder(c.Request().Body).Decode(cust)
+		cs.AddCustomer(cust)
+		return c.JSON(http.StatusCreated, nil)
+	})
+
+	//Update operations
 	e.POST("/jobs/:id", func(c echo.Context) error {
 		id := c.Param("id")
 		job := &jobs.Job{}
@@ -64,8 +83,19 @@ func main() {
 		return c.JSON(http.StatusOK, nil)
 	})
 
-	e.GET("/customers", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, cs.ListCustomers())
+	e.POST("/customers/:id", func(c echo.Context) error {
+		id := c.Param("id")
+		cust := &jobs.Customer{}
+		json.NewDecoder(c.Request().Body).Decode(cust)
+		cs.UpdateCustomer(id, cust)
+		return c.JSON(http.StatusOK, nil)
+	})
+
+	// Delete operations
+	e.DELETE("/customers/:id", func(c echo.Context) error {
+		id := c.Param("id")
+		cs.DeleteCustomer(id)
+		return c.JSON(http.StatusOK, nil)
 	})
 
 	e.DELETE("/jobs/:id", func(c echo.Context) error {

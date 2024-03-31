@@ -51,3 +51,10 @@ func NewJob(orderDate string, deadline string, status string,
 	j.Description = base64.StdEncoding.EncodeToString([]byte(description))
 	return j
 }
+
+func NewCustomer(name, note string) *Customer {
+	cust := &Customer{}
+	cust.Name = name
+	cust.Note = base64.StdEncoding.EncodeToString([]byte(note))
+	return cust
+}
