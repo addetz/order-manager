@@ -2,13 +2,20 @@ package jobs
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"os"
 )
 
+const JOBS_MANAGER_CUSTOMERS_FILE = "jobsManager-customers.json"
+const JOBS_MANAGER_JOBS_FILE = "jobsManager-jobs.json"
+
 func openJobsFile() []*Job {
-	filepath := "data/jobs.json"
-	file, err := os.ReadFile(filepath)
+	if _, err := os.Stat(JOBS_MANAGER_JOBS_FILE); errors.Is(err, os.ErrNotExist) {
+		createEmptyFile(JOBS_MANAGER_JOBS_FILE)
+		return []*Job{}
+	}
+	file, err := os.ReadFile(JOBS_MANAGER_JOBS_FILE)
 	if err != nil {
 		log.Fatal("Error opening file:", err)
 	}
@@ -20,9 +27,21 @@ func openJobsFile() []*Job {
 	return datas
 }
 
+func createEmptyFile(title string) {
+	file, err := os.Create(title) //create a new file
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	defer file.Close()
+}
+
 func openCustomersFile() []*Customer {
-	filepath := "data/customers.json"
-	file, err := os.ReadFile(filepath)
+	if _, err := os.Stat(JOBS_MANAGER_CUSTOMERS_FILE); errors.Is(err, os.ErrNotExist) {
+		createEmptyFile(JOBS_MANAGER_CUSTOMERS_FILE)
+		return []*Customer{}
+	}
+	file, err := os.ReadFile(JOBS_MANAGER_CUSTOMERS_FILE)
 	if err != nil {
 		log.Fatal("Error opening file:", err)
 	}
@@ -35,21 +54,19 @@ func openCustomersFile() []*Customer {
 }
 
 func writeJobsFile(rows []*Job) {
-	filepath := "data/jobs.json"
 	bytes, err := json.Marshal(rows)
 	if err != nil {
 		log.Fatal("Error marshal rows:", err)
 
 	}
-	os.WriteFile(filepath, bytes, os.ModePerm)
+	os.WriteFile(JOBS_MANAGER_JOBS_FILE, bytes, os.ModePerm)
 }
 
 func writeCustomersFile(rows []*Customer) {
-	filepath := "data/customers.json"
 	bytes, err := json.Marshal(rows)
 	if err != nil {
 		log.Fatal("Error marshal rows:", err)
 
 	}
-	os.WriteFile(filepath, bytes, os.ModePerm)
+	os.WriteFile(JOBS_MANAGER_CUSTOMERS_FILE, bytes, os.ModePerm)
 }
