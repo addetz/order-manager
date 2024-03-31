@@ -68,6 +68,12 @@ func main() {
 		return c.JSON(http.StatusOK, cs.ListCustomers())
 	})
 
+	e.DELETE("/jobs/:id", func(c echo.Context) error {
+		id := c.Param("id")
+		js.DeleteJob(id)
+		return c.JSON(http.StatusOK, nil)
+	})
+
 	log.Printf("Listening on localhost:%s...\n", port)
 	if err := s.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatal(err)

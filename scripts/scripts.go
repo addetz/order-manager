@@ -193,6 +193,23 @@ func populateJob(document dom.Document,
 		job := jobs.NewJob("", "", "", "", newDescription)
 		updateJob(jobId, job)
 	})
+
+	// Delete button
+	actionCell := row.InsertCell(6)
+	deleteBtn := document.CreateElement("button").(*dom.HTMLButtonElement)
+	deleteBtn.SetID(fmt.Sprintf("deleteBtn-%s", job.ID))
+	deleteBtn.Class().Add("btn")
+	deleteBtn.Class().Add("btn-warning")
+	deleteBtn.Class().Add("btn-lg")
+	deleteBtn.SetTextContent("Delete Row")
+	actionCell.AppendChild(deleteBtn)
+	deleteBtn.AddEventListener("click", true, func(e dom.Event) {
+		jobId := strings.Split(deleteBtn.ID(), "-")[1]
+		answer := dom.GetWindow().Confirm("Are you sure you want to delete row?")
+		if answer {
+			deleteJob(jobId, document)
+		}
+	})
 }
 
 func showUserInput(document dom.Document) {
@@ -220,7 +237,6 @@ func submitJob(document dom.Document) {
 		return
 	}
 
-	// JavaScript callbacks cannot be blocking
 	go func() {
 		resp, err := http.Post("/jobs", "application/json", bytes.NewBuffer(payload))
 		if err != nil || resp.StatusCode != http.StatusCreated {
@@ -230,6 +246,21 @@ func submitJob(document dom.Document) {
 
 	hideUserInput(document)
 	populateAllJobs(document)
+}
+
+func deleteJob(id string, document dom.Document) {
+	go func(id string) {
+		url := fmt.Sprintf("/jobs/%s", id)
+		req, err := http.NewRequest("DELETE", url, nil)
+		if err != nil {
+			log.Fatalf("DeleteJob Request Error:%v\n", err)
+		}
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil || resp.StatusCode != http.StatusOK {
+			log.Fatalf("DeleteJob Error:%v\n", err)
+		}
+		populateAllJobs(document)
+	}(id)
 }
 
 func updateJob(id string, job *jobs.Job) {

@@ -67,6 +67,11 @@ func (js *JobService) UpdateJob(id string, newJ *Job) error {
 	return nil
 }
 
+func (js *JobService) DeleteJob(id string) {
+	delete(js.jobs, id)
+	js.exportJobs()
+}
+
 func (js *JobService) ListJobs() []*Job {
 	jobsList := make([]*Job, 0)
 	for _, o := range js.jobs {
