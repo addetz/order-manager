@@ -51,6 +51,10 @@ func main() {
 		return c.File("frontend/layout/index.html")
 	})
 
+	e.GET("/favicon-melon.ico", func(c echo.Context) error {
+		return c.File("frontend/layout/favicon-melon.ico")
+	})
+
 	e.GET("/customerView", func(c echo.Context) error {
 		return c.File("frontend/layoutCustomers/index.html")
 	})
@@ -67,11 +71,11 @@ func main() {
 		return c.File("frontend/scripts/scripts.js.map")
 	})
 
-	e.GET("/customerView/scriptsCustomers.js", func(c echo.Context) error {
+	e.GET("/scriptsCustomers.js", func(c echo.Context) error {
 		return c.File("frontend/scriptsCustomers/scriptsCustomers.js")
 	})
 
-	e.GET("/customerView/scriptsCustomers.js.map", func(c echo.Context) error {
+	e.GET("/scriptsCustomers.js.map", func(c echo.Context) error {
 		return c.File("frontend/scriptsCustomers/scriptsCustomers.js.map")
 	})
 

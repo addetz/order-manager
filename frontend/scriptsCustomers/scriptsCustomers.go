@@ -24,9 +24,10 @@ func main() {
 	addCustomerBtn.AddEventListener("click", true, func(e dom.Event) {
 		container := document.GetElementByID("customerInput")
 		tableContainer := document.GetElementByID("customerContainer")
+		addCustomerBtnContainer := document.GetElementByID("addCustomerBtnContainer")
 		container.Class().Remove("d-none")
 		tableContainer.Class().Add("d-none")
-
+		addCustomerBtnContainer.Class().Add("d-none")
 	})
 
 	submitBtn.AddEventListener("click", true, func(e dom.Event) {
@@ -71,6 +72,8 @@ func hideUserInput(document dom.Document) {
 	customerNote.Value = ""
 	tableContainer := document.GetElementByID("customerContainer")
 	tableContainer.Class().Remove("d-none")
+	addCustomerBtnContainer := document.GetElementByID("addCustomerBtnContainer")
+	addCustomerBtnContainer.Class().Remove("d-none")
 }
 
 func populateAllCustomers(document dom.Document) {
