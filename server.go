@@ -1,7 +1,7 @@
 package main
 
 import (
-	"embed"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -14,8 +14,29 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-//go:embed frontend
-var frontend embed.FS
+//go:embed frontend/layout/index.html
+var rootIndex []byte
+
+//go:embed frontend/layoutCustomers/index.html
+var customerIndex []byte
+
+//go:embed frontend/scripts/scripts.js
+var scripts []byte
+
+//go:embed frontend/scripts/scripts.js.map
+var scriptsMap []byte
+
+//go:embed frontend/scriptsCustomers/scriptsCustomers.js
+var scriptsCustomers []byte
+
+//go:embed frontend/scriptsCustomers/scriptsCustomers.js.map
+var scriptsCustomersMap []byte
+
+//go:embed frontend/layout/custom.css
+var customCSS []byte
+
+//go:embed frontend/layout/favicon-melon.ico
+var favicon []byte
 
 const (
 	TIMEOUT = 3 * time.Second
@@ -32,9 +53,6 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
-		Filesystem: http.FS(frontend),
-	}))
 
 	// Configure server
 	s := http.Server{
@@ -48,35 +66,35 @@ func main() {
 
 	// Set up the root file
 	e.GET("/", func(c echo.Context) error {
-		return c.File("frontend/layout/index.html")
+		return c.Blob(http.StatusOK, "text/html; charset=utf-8", rootIndex)
 	})
 
 	e.GET("/favicon-melon.ico", func(c echo.Context) error {
-		return c.File("frontend/layout/favicon-melon.ico")
+		return c.Blob(http.StatusOK, "image/x-icon", favicon)
 	})
 
 	e.GET("/customerView", func(c echo.Context) error {
-		return c.File("frontend/layoutCustomers/index.html")
+		return c.Blob(http.StatusOK, "text/html; charset=utf-8", customerIndex)
 	})
 
 	e.GET("/scripts.js", func(c echo.Context) error {
-		return c.File("frontend/scripts/scripts.js")
+		return c.Blob(http.StatusOK, "application/javascript", scripts)
 	})
 
 	e.GET("/custom.css", func(c echo.Context) error {
-		return c.File("frontend/layout/custom.css")
+		return c.Blob(http.StatusOK, "text/css; charset=utf-8", customCSS)
 	})
 
 	e.GET("/scripts.js.map", func(c echo.Context) error {
-		return c.File("frontend/scripts/scripts.js.map")
+		return c.Blob(http.StatusOK, "application/javascript", scriptsMap)
 	})
 
 	e.GET("/scriptsCustomers.js", func(c echo.Context) error {
-		return c.File("frontend/scriptsCustomers/scriptsCustomers.js")
+		return c.Blob(http.StatusOK, "application/javascript", scriptsCustomers)
 	})
 
 	e.GET("/scriptsCustomers.js.map", func(c echo.Context) error {
-		return c.File("frontend/scriptsCustomers/scriptsCustomers.js.map")
+			return c.Blob(http.StatusOK, "application/javascript", scriptsCustomersMap)
 	})
 
 	// List operations
