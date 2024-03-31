@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,6 +13,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
+
+//go:embed frontend
+var frontend embed.FS
 
 const (
 	TIMEOUT = 3 * time.Second
@@ -28,6 +32,9 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+		Filesystem: http.FS(frontend),
+	}))
 
 	// Configure server
 	s := http.Server{
@@ -40,15 +47,33 @@ func main() {
 	}
 
 	// Set up the root file
-	e.Static("/", "layout")
-	// Set up customer view
-	e.Static("/customerView", "layout-customers")
+	e.GET("/", func(c echo.Context) error {
+		return c.File("frontend/layout/index.html")
+	})
 
-	// Set up scripts
-	e.File("/scripts.js", "scripts/scripts.js")
-	e.File("/scripts.js.map", "scripts/scripts.js.map")
-	e.File("/customerView/scripts-customers.js", "scripts-customers/scripts-customers.js")
-	e.File("/customerView/scripts-customers.js.map", "scripts-customers/scripts-customers.js.map")
+	e.GET("/customerView", func(c echo.Context) error {
+		return c.File("frontend/layoutCustomers/index.html")
+	})
+
+	e.GET("/scripts.js", func(c echo.Context) error {
+		return c.File("frontend/scripts/scripts.js")
+	})
+
+	e.GET("/custom.css", func(c echo.Context) error {
+		return c.File("frontend/layout/custom.css")
+	})
+
+	e.GET("/scripts.js.map", func(c echo.Context) error {
+		return c.File("frontend/scripts/scripts.js.map")
+	})
+
+	e.GET("/customerView/scriptsCustomers.js", func(c echo.Context) error {
+		return c.File("frontend/scriptsCustomers/scriptsCustomers.js")
+	})
+
+	e.GET("/customerView/scriptsCustomers.js.map", func(c echo.Context) error {
+		return c.File("frontend/scriptsCustomers/scriptsCustomers.js.map")
+	})
 
 	// List operations
 	e.GET("/jobs", func(c echo.Context) error {

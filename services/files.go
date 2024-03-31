@@ -13,6 +13,7 @@ const JOBS_MANAGER_JOBS_FILE = "jobsManager-jobs.json"
 func openJobsFile() []*Job {
 	if _, err := os.Stat(JOBS_MANAGER_JOBS_FILE); errors.Is(err, os.ErrNotExist) {
 		createEmptyFile(JOBS_MANAGER_JOBS_FILE)
+		writeJobsFile([]*Job{})
 		return []*Job{}
 	}
 	file, err := os.ReadFile(JOBS_MANAGER_JOBS_FILE)
@@ -39,6 +40,7 @@ func createEmptyFile(title string) {
 func openCustomersFile() []*Customer {
 	if _, err := os.Stat(JOBS_MANAGER_CUSTOMERS_FILE); errors.Is(err, os.ErrNotExist) {
 		createEmptyFile(JOBS_MANAGER_CUSTOMERS_FILE)
+		writeCustomersFile([]*Customer{})
 		return []*Customer{}
 	}
 	file, err := os.ReadFile(JOBS_MANAGER_CUSTOMERS_FILE)
