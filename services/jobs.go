@@ -11,12 +11,12 @@ import (
 const JobsDateFormat string = "2006-01-02"
 
 type Job struct {
-	ID           string    `json:"id"`
-	OrderDate    time.Time `json:"order_date"`
-	DeadlineDate time.Time `json:"deadline_date"`
-	Status       string    `json:"status"`
-	Customer     string    `json:"customer"`
-	Description  string    `json:"description"`
+	ID           string     `json:"id"`
+	OrderDate    *time.Time `json:"order_date"`
+	DeadlineDate *time.Time `json:"deadline_date"`
+	Status       string     `json:"status"`
+	Customer     string     `json:"customer"`
+	Description  string     `json:"description"`
 }
 
 type JobService struct {
@@ -42,6 +42,14 @@ func (js *JobService) UpdateJob(id string, newJ *Job) error {
 	curr, ok := js.jobs[id]
 	if !ok {
 		return fmt.Errorf("job %s not found", id)
+	}
+
+	if newJ.OrderDate != nil {
+		curr.OrderDate = newJ.OrderDate
+	}
+
+	if newJ.DeadlineDate != nil {
+		curr.DeadlineDate = newJ.DeadlineDate
 	}
 
 	if newJ.Status != "" {

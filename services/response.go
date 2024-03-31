@@ -41,10 +41,10 @@ func NewJob(orderDate string, deadline string, status string,
 	customer string, description string) *Job {
 	j := &Job{}
 	if orderDate != "" {
-		j.OrderDate = *getFormattedDate(orderDate)
+		j.OrderDate = getFormattedDate(orderDate)
 	}
 	if deadline != "" {
-		j.DeadlineDate = *getFormattedDate(deadline)
+		j.DeadlineDate = getFormattedDate(deadline)
 	}
 	j.Status = status
 	j.Customer = customer

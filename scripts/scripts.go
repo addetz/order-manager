@@ -112,8 +112,38 @@ func populateJob(document dom.Document,
 	job *jobs.Job) {
 	row := tableSection.InsertRow(0)
 	row.InsertCell(0).SetTextContent(job.ID)
-	row.InsertCell(1).SetTextContent(job.OrderDate.Format(jobs.JobsDateFormat))
-	row.InsertCell(2).SetTextContent(job.DeadlineDate.Format(jobs.JobsDateFormat))
+
+	// Order Date
+	orderDateCell := row.InsertCell(1)
+	orderDateCell.SetContentEditable("true")
+	orderDatePicker := document.CreateElement("input").(*dom.HTMLInputElement)
+	orderDatePicker.SetAttribute("type", "date")
+	orderDatePicker.Class().Add("form-control")
+	orderDatePicker.SetID(fmt.Sprintf("orderDate-%s", job.ID))
+	orderDateCell.AppendChild(orderDatePicker)
+	orderDatePicker.Value = job.OrderDate.Format(jobs.JobsDateFormat)
+	orderDatePicker.AddEventListener("change", true, func(e dom.Event) {
+		jobId := strings.Split(orderDatePicker.ID(), "-")[1]
+		newOrderDate := orderDatePicker.Value
+		job := jobs.NewJob(newOrderDate, "", "", "", "")
+		updateJob(jobId, job)
+	})
+
+	// Deadline Date
+	deadlineDateCell := row.InsertCell(2)
+	deadlineDateCell.SetContentEditable("true")
+	deadlineDatePicker := document.CreateElement("input").(*dom.HTMLInputElement)
+	deadlineDatePicker.SetAttribute("type", "date")
+	deadlineDatePicker.Class().Add("form-control")
+	deadlineDatePicker.SetID(fmt.Sprintf("deadlineDate-%s", job.ID))
+	deadlineDateCell.AppendChild(deadlineDatePicker)
+	deadlineDatePicker.Value = job.DeadlineDate.Format(jobs.JobsDateFormat)
+	deadlineDatePicker.AddEventListener("change", true, func(e dom.Event) {
+		jobId := strings.Split(deadlineDatePicker.ID(), "-")[1]
+		newDeadlineDate := deadlineDatePicker.Value
+		job := jobs.NewJob("", newDeadlineDate, "", "", "")
+		updateJob(jobId, job)
+	})
 
 	// Status
 	statusCell := row.InsertCell(3)
