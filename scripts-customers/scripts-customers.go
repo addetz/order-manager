@@ -36,6 +36,8 @@ func main() {
 	cancelBtn.AddEventListener("click", true, func(e dom.Event) {
 		hideUserInput(document)
 	})
+
+	populateAllCustomers(document)
 }
 
 func submitCustomer(document dom.Document) {
@@ -91,8 +93,8 @@ func populateCustomersCallback(document dom.Document, customers []*customers.Cus
 	for _, e := range customers {
 		populateCustomer(document, ts, e)
 	}
-	oldBody := document.GetElementByID("jobsTable").GetElementsByTagName("tbody")[0]
-	document.GetElementByID("jobsTable").ReplaceChild(newBody, oldBody)
+	oldBody := document.GetElementByID("customersTable").GetElementsByTagName("tbody")[0]
+	document.GetElementByID("customersTable").ReplaceChild(newBody, oldBody)
 }
 
 func populateCustomer(document dom.Document,
