@@ -20,6 +20,6 @@
 # Go workspace file
 go.work
 
-jobsManager
+jobsManager*
 
 .DS_Store

@@ -57,9 +57,9 @@ func submitCustomer(document dom.Document) {
 		if err != nil || resp.StatusCode != http.StatusCreated {
 			log.Fatalf("PostCustomer:%v\n", err)
 		}
+		populateAllCustomers(document)
 	}()
 
-	populateAllCustomers(document)
 	hideUserInput(document)
 }
 

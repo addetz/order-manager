@@ -14,13 +14,15 @@ type Customer struct {
 
 type CustomerService struct {
 	customers map[string]*Customer
+	filepath  string
 }
 
-func NewCustomerService() *CustomerService {
+func NewCustomerService(filepath string) *CustomerService {
 	cs := &CustomerService{
 		customers: make(map[string]*Customer, 0),
+		filepath:  filepath,
 	}
-	for _, c := range openCustomersFile() {
+	for _, c := range openCustomersFile(filepath) {
 		cs.customers[c.ID] = c
 	}
 	return cs
@@ -65,15 +67,15 @@ func (cs *CustomerService) UpdateCustomer(id string, newCust *Customer) error {
 	return nil
 }
 
-func (cs *CustomerService) SearchCustomer(name string) (*Customer, error){
-		for _, c := range cs.customers {
-			if c.Name == name {
-				return c, nil
-			}
+func (cs *CustomerService) SearchCustomer(name string) (*Customer, error) {
+	for _, c := range cs.customers {
+		if c.Name == name {
+			return c, nil
 		}
-		return nil, fmt.Errorf("no customer named %s found", name)
+	}
+	return nil, fmt.Errorf("no customer named %s found", name)
 }
 
 func (cs *CustomerService) exportCustomers() {
-	writeCustomersFile(cs.ListCustomers())
+	writeCustomersFile(cs.filepath, cs.ListCustomers())
 }

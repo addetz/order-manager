@@ -22,14 +22,16 @@ type Job struct {
 }
 
 type JobService struct {
-	jobs map[string]*Job
+	jobs     map[string]*Job
+	filepath string
 }
 
-func NewJobService() *JobService {
+func NewJobService(filepath string) *JobService {
 	js := &JobService{
-		jobs: make(map[string]*Job, 0),
+		jobs:     make(map[string]*Job, 0),
+		filepath: filepath,
 	}
-	js.importJobs()
+	js.importJobs(filepath)
 	return js
 }
 
@@ -121,15 +123,15 @@ func getStatusIndex(status string) int {
 	return -1
 }
 
-func (js *JobService) importJobs() {
-	rows := openJobsFile()
+func (js *JobService) importJobs(filepath string) {
+	rows := openJobsFile(filepath)
 	for _, row := range rows {
 		js.jobs[row.ID] = row
 	}
 }
 
 func (js *JobService) exportJobs() {
-	writeJobsFile(js.ListJobs())
+	writeJobsFile(js.filepath, js.ListJobs())
 }
 
 func GetFormattedDate(s string) *time.Time {

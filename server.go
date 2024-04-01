@@ -3,6 +3,7 @@ package main
 import (
 	_ "embed"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -43,8 +44,9 @@ const (
 )
 
 func main() {
-	cs := jobs.NewCustomerService()
-	js := jobs.NewJobService()
+	filePath := flag.String("filepath", ".", "executable path")
+	cs := jobs.NewCustomerService(*filePath)
+	js := jobs.NewJobService(*filePath)
 
 	// Read port if one is set
 	port := readPort()
@@ -94,7 +96,7 @@ func main() {
 	})
 
 	e.GET("/scriptsCustomers.js.map", func(c echo.Context) error {
-			return c.Blob(http.StatusOK, "application/javascript", scriptsCustomersMap)
+		return c.Blob(http.StatusOK, "application/javascript", scriptsCustomersMap)
 	})
 
 	// List operations
