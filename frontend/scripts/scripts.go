@@ -172,6 +172,7 @@ func populateJob(document dom.Document,
 	deadlineDateCell := row.InsertCell(1)
 	deadlineDateCell.SetContentEditable("true")
 	deadlineDatePicker := document.CreateElement("input").(*dom.HTMLInputElement)
+	deadlineDatePicker.SetAttribute("type", "date")
 	deadlineDatePicker.Class().Add("form-control")
 	deadlineDatePicker.SetID(createElementID("deadlineDate", job.ID))
 	deadlineDateCell.AppendChild(deadlineDatePicker)
