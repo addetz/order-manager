@@ -103,7 +103,6 @@ func populateCustomerDropdownOptionsCallback(document dom.Document,
 	customerDropdown *dom.HTMLSelectElement,
 	customers []*jobs.Customer,
 	currentValue string) {
-	log.Println(currentValue)
 	o := document.CreateElement("option")
 	o.SetTextContent("Unknown")
 	customerDropdown.AppendChild(o)
@@ -120,7 +119,6 @@ func populateCustomerDropdownOptionsCallback(document dom.Document,
 }
 
 func populateAllJobs(document dom.Document, filter string) {
-	log.Println("populate all jobs invoked with filter ", filter)
 	go func(callback func(document dom.Document, jobs []*jobs.Job)) {
 		url := "/jobs"
 		if filter != "" {
