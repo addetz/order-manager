@@ -2,8 +2,8 @@ generatescripts:
 	gopherjs build frontend/scripts/scripts.go -o frontend/scripts/scripts.js && \
 	gopherjs build frontend/scriptsCustomers/scriptsCustomers.go -o frontend/scriptsCustomers/scriptsCustomers.js
 generatescripts-apple: 
-	GOOS=darwin GOARCH=arm64  gopherjs build frontend/scripts/scripts.go -o frontend/scripts/scripts.js && \
-	gopherjs build frontend/scriptsCustomers/scriptsCustomers.go -o frontend/scriptsCustomers/scriptsCustomers.js
+	GOOS=darwin GOARCH=arm64 gopherjs build frontend/scripts/scripts.go -o frontend/scripts/scripts.js && \
+	GOOS=darwin GOARCH=arm64 gopherjs build frontend/scriptsCustomers/scriptsCustomers.go -o frontend/scriptsCustomers/scriptsCustomers.js
 build: 
 	make generatescripts && go build -o ./jobsManager
 build-apple: 
