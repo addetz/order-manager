@@ -57,8 +57,11 @@ func (js *JobService) UpdateJob(id string, newJ *Job) error {
 	if newJ.Status != "" {
 		curr.Status = newJ.Status
 	}
-	if newJ.CustomerID != "" {
+	if newJ.CustomerID != "" && newJ.CustomerID != "Unknown" {
 		curr.CustomerID = newJ.CustomerID
+	}
+	if newJ.CustomerID == "Unknown" {
+		curr.CustomerID = ""
 	}
 	if newJ.Description != "" {
 		curr.Description = newJ.Description

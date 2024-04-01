@@ -100,6 +100,10 @@ func main() {
 	// List operations
 	e.GET("/jobs", func(c echo.Context) error {
 		customerID := c.QueryParam("customerID")
+		log.Println(customerID)
+		if customerID == "unknown" {
+			return c.JSON(http.StatusOK, js.FilterJobs(""))
+		}
 		if customerID != "" {
 			return c.JSON(http.StatusOK, js.FilterJobs(customerID))
 		}
@@ -112,8 +116,9 @@ func main() {
 
 	// Create operations
 	e.POST("/jobs", func(c echo.Context) error {
-		job := &jobs.Job{}
+		job := jobs.NewJob("", "", "", "", "")
 		json.NewDecoder(c.Request().Body).Decode(job)
+		log.Printf("\n\n%v\n\n", job)
 		js.AddJob(job)
 		return c.JSON(http.StatusCreated, nil)
 	})

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"time"
 )
 
 func NewJobsResponse(resp *http.Response) ([]*Job, error) {
@@ -55,6 +56,9 @@ func NewCustomerSearchResponse(resp *http.Response) (*Customer, error) {
 func NewJob(orderDate string, deadline string, status string,
 	customerID string, description string) *Job {
 	j := &Job{}
+	defaultTime := time.Now().Format(JobsDateFormat)
+	j.OrderDate = GetFormattedDate(defaultTime)
+	j.DeadlineDate = GetFormattedDate(defaultTime)
 	if orderDate != "" {
 		j.OrderDate = GetFormattedDate(orderDate)
 	}

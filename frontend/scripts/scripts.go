@@ -42,15 +42,16 @@ func main() {
 
 func addCustomerFilter(document dom.Document) {
 	filterCustomerDropdown := document.GetElementByID("filterCustomerDropdown").(*dom.HTMLSelectElement)
-	o := document.CreateElement("option")
-	o.SetTextContent("All")
-	filterCustomerDropdown.AppendChild(o)
 	populateCustomerDropdownOptions(document, filterCustomerDropdown, "")
 	filterCustomerDropdown.AddEventListener("change", true, func(e dom.Event) {
 		filter := filterCustomerDropdown.SelectedOptions()[0].Value
 		go func(document dom.Document, filter string) {
 			if filter == "All" {
 				populateAllJobs(document, "")
+				return
+			}
+			if filter == "Unknown" {
+				populateAllJobs(document, "unknown")
 				return
 			}
 			resp, err := http.Get(fmt.Sprintf("/customers/search?name=%s", filter))
@@ -102,17 +103,24 @@ func populateCustomerDropdownOptionsCallback(document dom.Document,
 	customerDropdown *dom.HTMLSelectElement,
 	customers []*jobs.Customer,
 	currentValue string) {
+	log.Println(currentValue)
+	o := document.CreateElement("option")
+	o.SetTextContent("Unknown")
+	customerDropdown.AppendChild(o)
+	customerDropdown.SelectedIndex = 0
+
 	for i, c := range customers {
 		o := document.CreateElement("option")
 		o.SetTextContent(c.Name)
 		customerDropdown.AppendChild(o)
 		if c.ID == currentValue {
-			customerDropdown.SelectedIndex = i
+			customerDropdown.SelectedIndex = i + 1
 		}
 	}
 }
 
 func populateAllJobs(document dom.Document, filter string) {
+	log.Println("populate all jobs invoked with filter ", filter)
 	go func(callback func(document dom.Document, jobs []*jobs.Job)) {
 		url := "/jobs"
 		if filter != "" {
@@ -166,7 +174,6 @@ func populateJob(document dom.Document,
 	deadlineDateCell := row.InsertCell(1)
 	deadlineDateCell.SetContentEditable("true")
 	deadlineDatePicker := document.CreateElement("input").(*dom.HTMLInputElement)
-	deadlineDatePicker.SetAttribute("type", "date")
 	deadlineDatePicker.Class().Add("form-control")
 	deadlineDatePicker.SetID(createElementID("deadlineDate", job.ID))
 	deadlineDateCell.AppendChild(deadlineDatePicker)
@@ -205,15 +212,18 @@ func populateJob(document dom.Document,
 		jobId := extractJobIDFromElement(customerSelectElement.ID())
 		newCustomer := customerSelectElement.SelectedOptions()[0].Value
 		go func(document dom.Document, newCustomer string, jobId string) {
-			resp, err := http.Get(fmt.Sprintf("/customers/search?name=%s", newCustomer))
-			if err != nil {
-				log.Fatal(err)
+			newJob := jobs.NewJob("", "", "", "Unknown", "")
+			if newCustomer != "Unknown" {
+				resp, err := http.Get(fmt.Sprintf("/customers/search?name=%s", newCustomer))
+				if err != nil {
+					log.Fatal(err)
+				}
+				customer, err := jobs.NewCustomerSearchResponse(resp)
+				if err != nil {
+					log.Fatal(err)
+				}
+				newJob = jobs.NewJob("", "", "", customer.ID, "")
 			}
-			customer, err := jobs.NewCustomerSearchResponse(resp)
-			if err != nil {
-				log.Fatal(err)
-			}
-			newJob := jobs.NewJob("", "", "", customer.ID, "")
 			updateJob(document, jobId, newJob)
 		}(document, newCustomer, jobId)
 	})
@@ -275,23 +285,39 @@ func submitJob(document dom.Document) {
 	customerDropdown := document.GetElementByID("customerDropdown").(*dom.HTMLSelectElement)
 	customerElement := customerDropdown.Options()[customerDropdown.SelectedIndex]
 	description := document.GetElementByID("descriptionInput").(*dom.HTMLTextAreaElement)
-	job := jobs.NewJob(orderDate.Value, deadlineDate.Value, statusElement.Text, customerElement.Text,
+	job := jobs.NewJob(orderDate.Value, deadlineDate.Value, statusElement.Text, "",
 		description.Value)
-	payload, err := json.Marshal(job)
-	if err != nil {
-		log.Fatalf("PostJob:%v", err)
-		return
-	}
+	customerName := customerElement.Value
 
-	go func() {
+	go func(job *jobs.Job, customerName string) {
+		if customerName != "Unknown" {
+			resp, err := http.Get(fmt.Sprintf("/customers/search?name=%s", customerName))
+			if err != nil {
+				log.Fatal(err)
+			}
+			customer, err := jobs.NewCustomerSearchResponse(resp)
+			if err != nil {
+				log.Fatal(err)
+			}
+			job.CustomerID = customer.ID
+		}
+		payload, err := json.Marshal(job)
+		if err != nil {
+			log.Fatalf("PostJob:%v", err)
+			return
+		}
+
 		resp, err := http.Post("/jobs", "application/json", bytes.NewBuffer(payload))
 		if err != nil || resp.StatusCode != http.StatusCreated {
 			log.Fatalf("PostJob:%v\n", err)
 		}
-	}()
+
+		populateAllJobs(document, "")
+	}(job, customerName)
 
 	hideUserInput(document)
-	populateAllJobs(document, "")
+	filterCustomerDropdown := document.GetElementByID("filterCustomerDropdown").(*dom.HTMLSelectElement)
+	filterCustomerDropdown.SelectedIndex = 0
 }
 
 func deleteJob(id string, document dom.Document) {
